@@ -54,14 +54,18 @@ def quadResPrime(p):
 	
 	RPlus = xPlus | xMinus
 	RMinus = set([])
-	# make list of relatively prime integers to 4p
-	for i in range(2, (4 * p)):
-		if p % i == 0:
-			continue
-		else:
+
+	factors = factorize.factorize(4 * p)
+	# create set of relatively prime moduli not in R+
+	for i in range(1, (4 * p)):
+		legit = True
+		for f in factors:
+			if i % f != 0:
+				continue
+			else:
+				legit = False
+		if legit and i not in RPlus:
 			RMinus.add(i)
-	# exclude elements of RPlus from list
-	RMinus = RMinus - RPlus
 	
 	return RPlus, RMinus
 
@@ -76,12 +80,12 @@ def quadResInt(a):
 		isNegative = True
 		a = -a
 	
-	factors = factorize.factorize(a)
-	print("Factors of " + str(a) + ": " + str(factors))
+	factors1 = factorize.factorize(a)
+	print("Factors of " + str(a) + ": " + str(factors1))
 	RiPluses = []
 	RiMinuses = []
 	needs4a = False
-	for f in factors:
+	for f in factors1:
 		RiPlus, RiMinus = quadResPrime(f)
 		
 		# here we associate each set of quadratic residues with its modulus
@@ -100,36 +104,55 @@ def quadResInt(a):
 	
 	RPlus = set([])
 	RMinus = set([])
+	
 	if needs4a:
 		lim = 4 * a
-	else: 
+	else:
 		lim = a
+		
+	if isNegative:
+		# R+(-1) & R+(5) & R+(7)
+		for i in range(1, lim):
+			if (i % 4 == 1) and (i % RiPluses[0][0] in RiPluses[0][1]) and (i % RiPluses[1][0] in RiPluses[1][1]):
+				RPlus.add(i)
+			else:
+				continue
+		# R+(-1) & R-(5) & R-(7)
+		for i in range(1, lim):
+			if (i % 4 == 1) and (i % RiPluses[0][0] in RiMinuses[0][1]) and (i % RiPluses[1][0] in RiMinuses[1][1]):
+				RPlus.add(i)
+			else:
+				continue
+		# R-(-1) & R+(5) & R-(7)
+		for i in range(1, lim):
+			if (i % 4 == 3) and (i % RiPluses[0][0] in RiPluses[0][1]) and (i % RiPluses[1][0] in RiMinuses[1][1]):
+				RPlus.add(i)
+			else:
+				continue
+		# R-(-1) & R-(5) & R+(7)
+		for i in range(1, lim):
+			if (i % 4 == 3) and (i % RiPluses[0][0] in RiMinuses[0][1]) and (i % RiPluses[1][0] in RiPluses[1][1]):
+				RPlus.add(i)
+			else:
+				continue
 	
+	factors2 = factorize.factorize(4 * a)
+	# create set of relatively prime moduli not in R+
 	for i in range(1, lim):
 		legit = True
-		# is i in the intersection of all the sets of the residues of the factors?
-		for ri in RiPluses:
-			# this is where we needed the modulus from before
-			if i % ri[0] not in ri[1]:
+		for f in factors2:
+			if i % f != 0:
+				continue
+			else:
 				legit = False
-				break
-		if legit:
-			RPlus.add(i)
-		else:
+		if legit and i not in RPlus:
 			RMinus.add(i)
-			
-	print("R+(" + str(a) + ") = " + str(sorted(list(RPlus))))
-	print("R-(" + str(a) + ") = " + str(sorted(list(RMinus))))
-	
-	# special case for negative numbers	
-	if isNegative:
-		for r in RPlus.copy():
-			if r % 4 == 3:
-				RPlus.discard(r)
-				RMinus.add(r)
-		
+					
 	RPlus = sorted(list(RPlus))
 	RMinus = sorted(list(RMinus))
+	print("R+(" + str(-a) + ") = " + str(RPlus))
+	print("R-(" + str(-a) + ") = " + str(RMinus))
+	
 	return RPlus, RMinus
 
 # prints the result all pretty-like	
